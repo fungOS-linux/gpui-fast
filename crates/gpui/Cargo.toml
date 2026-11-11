@@ -30,6 +30,16 @@ test-support = [
     "dep:postage",
     "dep:web-time",
 ]
+# The headless app context and TestPlatform, without the native-only and
+# proptest dependencies that `test-support` drags in. This is what a wasm
+# component needs to run a real GPUI window against an offscreen renderer.
+headless = [
+    "collections/test-support",
+    "http_client/test-support",
+    "dep:futures-concurrency",
+    "dep:postage",
+    "dep:web-time",
+]
 bench-support = ["profiler", "dep:criterion", "dep:bench_metrics"]
 # Preserve the published feature name while consumers migrate to `bench-support`.
 bench = ["bench-support"]

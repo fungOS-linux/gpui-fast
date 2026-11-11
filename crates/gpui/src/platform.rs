@@ -13,7 +13,12 @@ pub mod popup;
 #[cfg(any(test, feature = "test-support", feature = "bench-support"))]
 mod threaded_dispatcher;
 
-#[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+#[cfg(any(
+    test,
+    feature = "test-support",
+    feature = "bench-support",
+    feature = "headless"
+))]
 mod test;
 
 #[cfg(all(target_os = "macos", any(test, feature = "test-support")))]
@@ -51,7 +56,12 @@ use anyhow::{Context as _, Result};
 use async_task::Runnable;
 use collections::FxHashMap;
 use futures::channel::oneshot;
-#[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+#[cfg(any(
+    test,
+    feature = "test-support",
+    feature = "bench-support",
+    feature = "headless"
+))]
 use image::RgbaImage;
 use image::codecs::{gif::GifDecoder, webp::WebPDecoder};
 use image::{DynamicImage, Frame, Rgba};
@@ -171,11 +181,18 @@ pub enum ActivationPolicy {
     Accessory,
 }
 
-#[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+#[cfg(any(
+    test,
+    feature = "test-support",
+    feature = "bench-support",
+    feature = "headless"
+))]
 pub(crate) use test::*;
 
+#[cfg(any(test, feature = "test-support", feature = "headless"))]
+pub use test::TestDispatcher;
 #[cfg(any(test, feature = "test-support"))]
-pub use test::{TestDispatcher, TestScreenCaptureSource, TestScreenCaptureStream};
+pub use test::{TestScreenCaptureSource, TestScreenCaptureStream};
 
 #[cfg(any(test, feature = "test-support", feature = "bench-support"))]
 pub use threaded_dispatcher::ThreadedDispatcher;
@@ -1463,7 +1480,12 @@ pub trait PlatformWindow: HasWindowHandle + HasDisplayHandle {
     /// Inform the adapter of updated window bounds.
     fn a11y_update_window_bounds(&self) {}
 
-    #[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+    #[cfg(any(
+        test,
+        feature = "test-support",
+        feature = "bench-support",
+        feature = "headless"
+    ))]
     fn as_test(&mut self) -> Option<&mut TestWindow> {
         None
     }
@@ -1471,14 +1493,19 @@ pub trait PlatformWindow: HasWindowHandle + HasDisplayHandle {
     /// Renders the given scene to a texture and returns the pixel data as an RGBA image.
     /// This does not present the frame to screen - useful for visual testing where we want
     /// to capture what would be rendered without displaying it or requiring the window to be visible.
-    #[cfg(any(test, feature = "test-support"))]
+    #[cfg(any(test, feature = "test-support", feature = "headless"))]
     fn render_to_image(&self, _scene: &Scene) -> Result<RgbaImage> {
         anyhow::bail!("render_to_image not implemented for this platform")
     }
 }
 
 /// A renderer for headless windows that can produce real rendered output.
-#[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+#[cfg(any(
+    test,
+    feature = "test-support",
+    feature = "bench-support",
+    feature = "headless"
+))]
 pub trait PlatformHeadlessRenderer {
     /// Render a scene and return the result as an RGBA image.
     fn render_scene_to_image(
@@ -1548,7 +1575,12 @@ pub trait PlatformDispatcher: Send + Sync {
         ActivityGuard::noop()
     }
 
-    #[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+    #[cfg(any(
+        test,
+        feature = "test-support",
+        feature = "bench-support",
+        feature = "headless"
+    ))]
     fn as_test(&self) -> Option<&TestDispatcher> {
         None
     }

@@ -29,7 +29,7 @@ use collections::{FxHashMap, FxHashSet, HashMap, TypeIdHashMap, TypeIdHashSet, V
 pub use context::*;
 pub use entity_map::*;
 use gpui_util::{ResultExt, debug_panic};
-#[cfg(any(test, feature = "test-support"))]
+#[cfg(any(test, feature = "test-support", feature = "headless"))]
 pub use headless_app_context::*;
 use http_client::{HttpClient, Url};
 use smallvec::SmallVec;
@@ -66,7 +66,7 @@ mod async_context;
 mod bench_context;
 mod context;
 mod entity_map;
-#[cfg(any(test, feature = "test-support"))]
+#[cfg(any(test, feature = "test-support", feature = "headless"))]
 mod headless_app_context;
 #[cfg(any(test, feature = "test-support"))]
 mod test_app;
@@ -841,7 +841,7 @@ impl SystemWindowTabController {
 }
 
 pub(crate) enum GpuiMode {
-    #[cfg(any(test, feature = "test-support"))]
+    #[cfg(any(test, feature = "test-support", feature = "headless"))]
     Test {
         skip_drawing: bool,
     },
@@ -849,7 +849,7 @@ pub(crate) enum GpuiMode {
 }
 
 impl GpuiMode {
-    #[cfg(any(test, feature = "test-support"))]
+    #[cfg(any(test, feature = "test-support", feature = "headless"))]
     pub fn test() -> Self {
         GpuiMode::Test {
             skip_drawing: false,
@@ -859,7 +859,7 @@ impl GpuiMode {
     #[inline]
     pub(crate) fn skip_drawing(&self) -> bool {
         match self {
-            #[cfg(any(test, feature = "test-support"))]
+            #[cfg(any(test, feature = "test-support", feature = "headless"))]
             GpuiMode::Test { skip_drawing } => *skip_drawing,
             GpuiMode::Production => false,
         }

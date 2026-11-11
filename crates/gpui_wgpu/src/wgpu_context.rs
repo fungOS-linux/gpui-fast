@@ -91,7 +91,7 @@ pub enum WgpuBackend {
     Native(wgpu::Backend),
 }
 
-#[cfg(target_family = "wasm")]
+#[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum WebBackendPreference {
     #[default]
@@ -100,7 +100,7 @@ pub enum WebBackendPreference {
     WebGl,
 }
 
-#[cfg(target_family = "wasm")]
+#[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 pub struct PreparedWebGraphics {
     pub context: WgpuContext,
     pub surface: wgpu::Surface<'static>,
@@ -110,11 +110,11 @@ pub struct PreparedWebGraphics {
 /// target carries a display handle, and `SurfaceTarget::Canvas` always passes `None`.
 /// The WebGL2 backend never reads the handle (WebGPU bypasses wgpu-core entirely), so
 /// a unit web display handle on the instance satisfies the check.
-#[cfg(target_family = "wasm")]
+#[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 #[derive(Debug)]
 struct WebDisplaySource;
 
-#[cfg(target_family = "wasm")]
+#[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 impl raw_window_handle::HasDisplayHandle for WebDisplaySource {
     fn display_handle(
         &self,
@@ -270,9 +270,11 @@ impl WgpuContext {
         ))
     }
 
-    #[cfg(all(
-        not(target_family = "wasm"),
-        any(test, feature = "bench-support", feature = "test-support")
+    #[cfg(any(
+        test,
+        feature = "bench-support",
+        feature = "test-support",
+        feature = "headless"
     ))]
     /// Both candidates are 8-bit RGBA-ordered or BGRA-ordered formats: headless readback
     /// copies rows as 4 bytes per pixel and only swizzles, so no other formats may be added
@@ -340,7 +342,41 @@ impl WgpuContext {
         }
     }
 
-    #[cfg(target_family = "wasm")]
+    /// Builds a context from a caller-created offscreen device.
+    ///
+    /// A `wasm32-wasip2` component cannot create a window or a surface, and it
+    /// cannot block on adapter/device futures the way native code does. The
+    /// host provides a `wasi:webgpu` instance; the component drives the async
+    /// requests with its own executor (for example `wit_bindgen::block_on`)
+    /// and hands the resolved parts here.
+    #[cfg(all(target_family = "wasm", target_os = "wasi"))]
+    pub fn from_offscreen(
+        instance: wgpu::Instance,
+        adapter: wgpu::Adapter,
+        device: wgpu::Device,
+        queue: wgpu::Queue,
+    ) -> anyhow::Result<(Self, wgpu::TextureFormat)> {
+        let target_format = Self::headless_target_format(&adapter).ok_or_else(|| {
+            anyhow::anyhow!("adapter has no RGBA8 or BGRA8 offscreen render target format")
+        })?;
+        let errors = DeviceErrorState::install(&device);
+        Ok((
+            Self {
+                instance,
+                adapter,
+                device: Arc::new(device),
+                queue: Arc::new(queue),
+                backend: WgpuBackend::BrowserWebGpu,
+                dual_source_blending: false,
+                color_texture_format: target_format,
+                errors,
+                fast_dynamic_textures: Default::default(),
+            },
+            target_format,
+        ))
+    }
+
+    #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
     pub async fn new_web(
         canvas: &web_sys::HtmlCanvasElement,
         preference: WebBackendPreference,
@@ -348,7 +384,7 @@ impl WgpuContext {
         Self::new_web_with_backend(canvas, preference).await
     }
 
-    #[cfg(target_family = "wasm")]
+    #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
     #[allow(clippy::arc_with_non_send_sync)]
     async fn new_web_with_backend(
         canvas: &web_sys::HtmlCanvasElement,
@@ -466,7 +502,6 @@ impl WgpuContext {
                 memory_hints: wgpu::MemoryHints::MemoryUsage,
                 trace: wgpu::Trace::Off,
                 experimental_features: wgpu::ExperimentalFeatures::disabled(),
-                default_queue: wgpu::QueueDescriptor::default(),
             })
             .await
             .map_err(|e| anyhow::anyhow!("Failed to create wgpu device: {e}"))?;

@@ -357,7 +357,7 @@ impl WgpuRenderer {
         )
     }
 
-    #[cfg(target_family = "wasm")]
+    #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
     pub fn new_from_canvas(
         context: &WgpuContext,
         canvas: &web_sys::HtmlCanvasElement,
@@ -406,7 +406,7 @@ impl WgpuRenderer {
                 surface_caps
                     .formats
                     .iter()
-                    .find(|format| !format.has_srgb_suffix())
+                    .find(|format| !format.is_srgb())
                     .copied()
             })
             .or_else(|| surface_caps.formats.first().copied())
@@ -2317,18 +2317,22 @@ impl WgpuRenderer {
     }
 }
 
-#[cfg(all(
-    not(target_family = "wasm"),
-    any(test, feature = "bench-support", feature = "test-support")
+#[cfg(any(
+    test,
+    feature = "bench-support",
+    feature = "test-support",
+    feature = "headless"
 ))]
 struct HeadlessRenderTarget {
     texture: wgpu::Texture,
     view: wgpu::TextureView,
 }
 
-#[cfg(all(
-    not(target_family = "wasm"),
-    any(test, feature = "bench-support", feature = "test-support")
+#[cfg(any(
+    test,
+    feature = "bench-support",
+    feature = "test-support",
+    feature = "headless"
 ))]
 impl HeadlessRenderTarget {
     fn size(&self) -> Size<DevicePixels> {
@@ -2339,9 +2343,11 @@ impl HeadlessRenderTarget {
     }
 }
 
-#[cfg(all(
-    not(target_family = "wasm"),
-    any(test, feature = "bench-support", feature = "test-support")
+#[cfg(any(
+    test,
+    feature = "bench-support",
+    feature = "test-support",
+    feature = "headless"
 ))]
 pub struct WgpuHeadlessRenderer {
     context: WgpuContext,
@@ -2350,13 +2356,27 @@ pub struct WgpuHeadlessRenderer {
     observed_error_generation: u64,
 }
 
-#[cfg(all(
-    not(target_family = "wasm"),
-    any(test, feature = "bench-support", feature = "test-support")
+#[cfg(any(
+    test,
+    feature = "bench-support",
+    feature = "test-support",
+    feature = "headless"
 ))]
 impl WgpuHeadlessRenderer {
+    /// Creates a renderer on the process's cached headless device.
+    #[cfg(not(target_os = "wasi"))]
     pub fn new() -> anyhow::Result<Self> {
         let (context, target_format) = WgpuContext::new_headless()?;
+        Self::with_context(context, target_format)
+    }
+
+    /// Creates a renderer on a caller-supplied context. A wasm component has no
+    /// window and no process-wide device: the host hands it a `wasi:webgpu`
+    /// instance, and `WgpuContext::new_offscreen` turns that into a context.
+    pub fn with_context(
+        context: WgpuContext,
+        target_format: wgpu::TextureFormat,
+    ) -> anyhow::Result<Self> {
         // The device may be shared with earlier renderers; observe only errors raised from
         // here on, including any while this renderer builds its pipelines.
         let observed_error_generation = context.errors().current_generation();
@@ -2559,9 +2579,11 @@ impl WgpuHeadlessRenderer {
     }
 }
 
-#[cfg(all(
-    not(target_family = "wasm"),
-    any(test, feature = "bench-support", feature = "test-support")
+#[cfg(any(
+    test,
+    feature = "bench-support",
+    feature = "test-support",
+    feature = "headless"
 ))]
 impl gpui::PlatformHeadlessRenderer for WgpuHeadlessRenderer {
     fn render_scene_to_image(
