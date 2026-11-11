@@ -132,7 +132,9 @@ impl TestWindow {
             is_fullscreen: false,
             // Preserve the test platform's historical 2x default, unless the
             // caller named the scale it actually renders at.
-            scale_factor: options.initial_scale_factor.unwrap_or(2.0),
+            // 2.0 is the test platform's historical default; a caller that knows
+            // the real ratio names it and gets a frame at that resolution.
+            scale_factor: params.initial_scale_factor.unwrap_or(2.0),
             appearance: WindowAppearance::Light,
             external_drag_files: Vec::new(),
             start_external_drag_result: false,

@@ -2754,6 +2754,17 @@ pub struct WindowOptions {
 pub struct WindowParams {
     pub bounds: Bounds<Pixels>,
 
+    /// Device pixels per layout pixel, when the caller chose one.
+    ///
+    /// A native platform reads the display and ignores this; a headless one has
+    /// no display to ask, so it renders at the scale it was told about instead
+    /// of a fixed guess.
+    #[cfg_attr(
+        any(target_os = "linux", target_os = "freebsd", target_os = "macos"),
+        allow(dead_code)
+    )]
+    pub initial_scale_factor: Option<f32>,
+
     /// The titlebar configuration of the window
     #[cfg_attr(feature = "wayland", allow(dead_code))]
     pub titlebar: Option<TitlebarOptions>,

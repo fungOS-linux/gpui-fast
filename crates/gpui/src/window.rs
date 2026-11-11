@@ -1666,6 +1666,7 @@ impl Window {
         let WindowOptions {
             window_bounds,
             titlebar,
+            initial_scale_factor,
             focus,
             show,
             kind,
@@ -1701,6 +1702,7 @@ impl Window {
             handle,
             WindowParams {
                 bounds: window_bounds.get_bounds(),
+                initial_scale_factor,
                 titlebar,
                 kind,
                 is_movable,
