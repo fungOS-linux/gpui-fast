@@ -106,6 +106,20 @@ impl HeadlessAppContext {
         size: Size<Pixels>,
         build_root: impl FnOnce(&mut Window, &mut App) -> Entity<V>,
     ) -> Result<WindowHandle<V>> {
+        self.open_window_scaled(size, 2.0, build_root)
+    }
+
+    /// Opens a window for headless rendering at a caller-chosen device scale.
+    ///
+    /// `size` is the layout size; the rendered image is `size * scale`. A caller
+    /// that knows the real device pixel ratio passes it here so a captured frame
+    /// is at the resolution the window will actually be blitted into.
+    pub fn open_window_scaled<V: Render + 'static>(
+        &mut self,
+        size: Size<Pixels>,
+        scale_factor: f32,
+        build_root: impl FnOnce(&mut Window, &mut App) -> Entity<V>,
+    ) -> Result<WindowHandle<V>> {
         use crate::{point, px};
 
         let bounds = Bounds {
@@ -117,6 +131,7 @@ impl HeadlessAppContext {
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
+                initial_scale_factor: Some(scale_factor),
                 focus: false,
                 show: false,
                 ..Default::default()

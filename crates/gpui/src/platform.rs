@@ -2657,6 +2657,12 @@ pub struct WindowOptions {
     /// The titlebar configuration of the window
     pub titlebar: Option<TitlebarOptions>,
 
+    /// The scale factor to open the window at, for platforms that have no
+    /// display to ask. A native platform renders at its display's scale and
+    /// ignores this; a headless one uses it so a caller that knows the device
+    /// pixel ratio gets pixels at that ratio instead of a fixed guess.
+    pub initial_scale_factor: Option<f32>,
+
     /// Whether the window should be focused when created
     pub focus: bool,
 
@@ -2847,6 +2853,7 @@ impl Default for WindowOptions {
                 appears_transparent: Default::default(),
                 traffic_light_position: Default::default(),
             }),
+            initial_scale_factor: None,
             focus: true,
             show: true,
             kind: WindowKind::Normal,

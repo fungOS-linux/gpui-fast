@@ -130,8 +130,9 @@ impl TestWindow {
             text_input_configurations: Vec::new(),
             text_input_state_changes: Vec::new(),
             is_fullscreen: false,
-            // Preserve the test platform's historical 2x default.
-            scale_factor: 2.0,
+            // Preserve the test platform's historical 2x default, unless the
+            // caller named the scale it actually renders at.
+            scale_factor: options.initial_scale_factor.unwrap_or(2.0),
             appearance: WindowAppearance::Light,
             external_drag_files: Vec::new(),
             start_external_drag_result: false,
