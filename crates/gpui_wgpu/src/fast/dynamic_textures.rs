@@ -111,6 +111,15 @@ impl WgpuDynamicTexture {
         Ok(result)
     }
 
+    /// The handle a view paints with
+    /// [`Window::paint_dynamic_texture`](gpui::Window::paint_dynamic_texture).
+    ///
+    /// A target that owns GPU memory is still the owner: this is a copyable
+    /// handle, not a token, and dropping the target retires it.
+    pub fn texture(&self) -> DynamicTexture {
+        self.texture
+    }
+
     /// Paints with the window's current clipping, opacity and painter order.
     /// Call during paint in a window using the creating context.
     pub fn paint(&self, window: &mut Window, bounds: Bounds<Pixels>) -> Result<()> {

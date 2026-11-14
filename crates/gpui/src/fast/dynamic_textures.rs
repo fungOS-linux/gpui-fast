@@ -94,6 +94,14 @@ impl DynamicTexture {
         self.id
     }
 
+    /// The pixel size the texture was allocated with.
+    ///
+    /// A painter needs it to place and scale the texture without the producer
+    /// telling it again, and a producer needs it to lay out its own render.
+    pub fn size(&self) -> crate::Size<DevicePixels> {
+        self.size
+    }
+
     /// Registers the size and version of a GPU-written texture.
     ///
     /// Renderer crates allocate and own its GPU memory on their own context.
